@@ -14,23 +14,44 @@ class Board:
         
         self.init_board()
         
+    def apply_move(self, move: list) -> bool:
+        for coord in move:
+            if isinstance(coord, str):
+                start, end = coord.split(" ")
+                x, y = self.convert_coord(start)
+                new_x, new_y = self.convert_coord(end)
+                if not self.move(x, y, new_x, new_y):
+                    return False
+            elif (isinstance(coord, tuple) or isinstance(coord, list)) and len(coord) == 2 and len(coord[0]) == 2 and len(coord[1]) == 2:
+                x, y = self.convert_coord(coord[0])
+                new_x, new_y = self.convert_coord(coord[1])
+                if not self.move(x, y, new_x, new_y):
+                    return False
+            else:
+                return False
+        return True
+            
+    #########################################################
+    #                       Board functions                 #
+    #########################################################
+        
     def init_board(self):
         """
         Initialize the board with the pieces in their starting positions
         
-        1: black pawn
-        2: black rook
-        3: black knight
-        4: black bishop
-        5: black queen
-        6: black king
+        -1: black pawn
+        -2: black rook
+        -3: black knight
+        -4: black bishop
+        -5: black queen
+        -6: black king
         
-        -1: white pawn
-        -2: white rook
-        -3: white knight
-        -4: white bishop
-        -5: white queen
-        -6: white king
+        1: white pawn
+        2: white rook
+        3: white knight
+        4: white bishop
+        5: white queen
+        6: white king
         
         """
         # Pawns
@@ -64,9 +85,6 @@ class Board:
         self.board[0][4] = 6
         self.board[self.HEIGHT - 1][4] = -6
        
-    #########################################################
-    #                       Board functions                 #
-    #########################################################
     def is_inside(self, x: int, y: int) -> bool:
         return 0 <= x < self.WIDTH and 0 <= y < self.HEIGHT
     
@@ -220,6 +238,16 @@ class Board:
             
         )
     
+    def get_legal_moves(self, x: int, y: int) -> List[Tuple[int, int]]:
+        piece = self.board[y][x]
+        if piece == 0:
+            return []
+        moves = []
+        for i in range(self.HEIGHT):
+            for j in range(self.WIDTH):
+                if self.can_move(x, y, j, i):
+                    moves.append((j, i))
+        return moves
     #########################################################
     #                       Display functions               #
     #########################################################
@@ -261,19 +289,52 @@ class Board:
             -6: "♚"
         }
         letters = "ABCDEFGH"
-        print("    " + " ".join(letters))
-        print("-" * (self.WIDTH * 2 + 4))
+        output = "    " + " ".join(letters) + "\n"
+        output += "-" * (self.WIDTH * 2 + 4) + "\n"
         for i in range(self.HEIGHT):
-            print(self.HEIGHT - i, end=" | ")
+            output += str(i + 1) + " | "
             for j in range(self.WIDTH):
                 piece = self.board[i][j]
-                print(pieces[piece], end=" ")
-            print()
-        print("-" * (self.WIDTH * 2 + 4))
-        
+                output += pieces[piece] + " "
+            output += "\n"
+        output += "-" * (self.WIDTH * 2 + 4) + "\n"
+        return output
+    
+    def fen(self):
+        fen = ""
+        for i in range(self.HEIGHT):
+            empty = 0
+            for j in range(self.WIDTH):
+                piece = self.board[i][j]
+                if piece == 0:
+                    empty += 1
+                else:
+                    if empty > 0:
+                        fen += str(empty)
+                        empty = 0
+                    fen += self.piece_to_fen(piece)
+            if empty > 0:
+                fen += str(empty)
+            if i != self.HEIGHT - 1:
+                fen += "/"
+        return fen
+    
 if __name__ == '__main__':
     board = Board()
-    board.display()
+    board.apply_move(
+        [
+            "E2 E4",
+            "E7 E5",
+            "D2 D4",
+            "D7 D5",
+            "B1 C3",
+            "G8 F6",
+            "C1 E3",
+            "F8 E7",
+            "E1 D2",
+        ]
+    )
+    print(board.display())
 
     
     

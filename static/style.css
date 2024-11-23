@@ -1,0 +1,123 @@
+:root {
+    --white-square-color: #EBECD0;
+    --black-square-color: #739552;
+}
+
+body {
+    font-family: Arial, sans-serif;
+}
+
+.board-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+}
+
+
+.overlay {
+    background-color: rgba(0, 0, 0, 0.5);
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 24px;
+    font-weight: bold;
+    display: none;
+}
+
+#new-game-button {
+    font-size: 24px;
+    padding: 10px;
+    margin-top: 20px;
+    cursor: pointer;
+}
+
+.board {
+    display: grid;
+    place-items: center;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
+    gap: 0;
+    width: 70vmin;
+    height: 70vmin;
+    z-index: 1;
+}
+
+
+.square {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    cursor: pointer;
+    z-index: 1;
+    position: relative;
+
+    .number {
+        position: absolute;
+        font-size: calc(70vmin / 8 / 4);
+        top: 4px;
+        left: 4px;
+    }
+
+    .letter {
+        position: absolute;
+        font-size: calc(70vmin / 8 / 4);
+        bottom: 4px;
+        right: 4px;
+    }
+
+}
+
+.square.move {
+    background-color: lightblue;
+}
+
+
+.piece {
+    top: 0;
+    left: 0;
+    position: relative;
+    width: 80%;
+    height: 80%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    cursor: pointer;
+    z-index: 10;
+}
+
+.white {
+    background-color: var(--white-square-color);
+    color: var(--white-square-color);
+    .number, .letter {
+        color: var(--black-square-color);
+    }
+}
+
+.black {
+    background-color: var(--black-square-color);
+    color: var(--black-square-color);
+    .number, .letter {
+        color: var(--white-square-color);
+    }
+}
+
+.white.selected{
+    background-color: #F5F682;
+}
+
+.black.selected{
+    background-color: #B9CA43;
+}
+
