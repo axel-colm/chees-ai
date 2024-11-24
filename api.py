@@ -1,7 +1,9 @@
 import os
 from flask import Flask, request, jsonify, session, send_from_directory
 from flask_session import Session
-from chess import Board
+from chess import Chess
+from chess.alphabeta import AlphaBeta
+import random
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] =  os.environ.get('SECRET_KEY')
@@ -20,56 +22,82 @@ def serve_static(path):
 
 @app.route('/api/chess/new', methods=['GET'])
 def new_game():
-    session['board'] = Board()
-    return jsonify({'message': f'New game started\n{session["board"].display()}'})
+    session['board'] = Chess()
+    return jsonify({'message': 'New game started'})
 
 @app.route('/api/chess/move', methods=['POST'])
 def apply_move():
-    board = session.get('board')
-    if not board:
-        return jsonify({'error': 'No game in progress'}), 400
+    chess: Chess = session.get('board')
     move = request.json.get('move')
-    success = board.apply_move(move)
-    session['board'] = board  # Update the session with the new board state
-    return jsonify({'success': success, 'board': board.board})
+    ok = chess.move(move)
+    response = {'board': chess.board.board, 'turn': chess.turn, 'isCheck': {'white': chess.board.is_check(1), 'black': chess.board.is_check(-1)}}
+    if not ok:
+        response['error'] = 'Invalid move'
+        return jsonify(response), 400
+    
+    return jsonify(response), 200
+
 
 @app.route('/api/chess/moves', methods=['GET'])
 def get_moves():
-    board = session.get('board')
-    if not board:
-        return jsonify({'error': 'No game in progress'}), 400
     row = request.args.get('row')
     col = request.args.get('col')
-    print(f'Row: {row}, Col: {col}')
-    if row is None or col is None:
-        return jsonify({'error': 'Row and column must be provided'}), 400
-    try:
-        row = int(row)
-        col = int(col)
-    except ValueError:
-        return jsonify({'error': 'Row and column must be integers'}), 400
-    coord_str = board.convert_coord_inv(row, col)
-    print(f'Getting moves for {coord_str}')
-    print(f'Board state:\n{board.display()}')
-    moves = board.get_legal_moves(row, col)
+    if row.isdigit() and col.isdigit():
+        row, col = int(row), int(col)
+    else:
+        return jsonify({'error': 'Invalid row or col'}), 400
+    
+    chess = session.get('board')
+    if not chess:
+        return jsonify({'error': 'No game in progress'}), 400
+    
+    piece = chess.board.get_piece(col, row)
+    if piece == 0:
+        return jsonify({'moves': []})
+    moves = chess.board.get_legal_moves(col, row)
+    moves = [{'row': move[1], 'col': move[0]} for move in moves]
     return jsonify({'moves': moves})
 
-@app.route('/api/chess/undo', methods=['POST'])
-def undo_move():
-    board = session.get('board')
-    if not board:
-        return jsonify({'error': 'No game in progress'}), 400
-    board.undo_move()
-    session['board'] = board
+
+@app.route('/api/chess/random-move', methods=['POST'])
+def random_move():
+    chess: Chess = session.get('board')
+    color = chess.turn
+    pieces = chess.board.get_pieces_of(color)
+    moves = []
+    src = None
+    while len(moves) == 0:
+        src = random.choice(pieces)
+        moves = chess.board.get_legal_moves(src[0], src[1])
+    dest = random.choice(moves)
+    src = chess.board.convert_coord_inv(*src)
+    dst = chess.board.convert_coord_inv(*dest)
+    move = f"{src}-{dst}"
+    ok = chess.move(move)
+    response = {'board': chess.board.board, 'turn': chess.turn, 'isCheck': {'white': chess.board.is_check(1), 'black': chess.board.is_check(-1)}}
+    if not ok:
+        response['error'] = 'Invalid move'
+        return jsonify(response), 400
+    return jsonify(response), 200
+
+@app.route('/api/chess/alphabeta-move', methods=['POST'])
+def alphabeta_move():
+    depth = request.json.get('depth', 3)
+    chess: Chess = session.get('board')
+    move = AlphaBeta.get_best_move(chess.board, depth, chess.turn)
+    src = move[0]
+    dest = move[1]
+    src = chess.board.convert_coord_inv(*src)
+    dst = chess.board.convert_coord_inv(*dest)
+    move = f"{src}-{dst}"
+    print(move)
+    ok = chess.move(move)
+    result = {'board': chess.board.board, 'turn': chess.turn, 'isCheck': {'white': chess.board.is_check(1), 'black': chess.board.is_check(-1)}}
+    if not ok:
+        result['error'] = 'Invalid move'
+        return jsonify(result), 400
+    return jsonify(result), 200
     
-    return jsonify({'message': 'Move undone'})
-
-@app.route('/api/chess/reset', methods=['POST'])
-def reset_game():
-    session.pop('board', None)
-    return jsonify({'message': 'Game reset'})
-
-
-
+    
 if __name__ == '__main__':
     app.run(debug=True)
