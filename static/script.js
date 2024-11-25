@@ -181,11 +181,8 @@ document.addEventListener('DOMContentLoaded', function () {
         })
             .then(response => response.json())
             .then(data => {
-                board = data.board;
-                turn = data.turn;
-                displayBoard();
-                setCheck(data.isCheck);
-                if (turn !== color) {
+                updateData(data);
+                if (turn !== color && !data.gameOver) {
                     requestAiMove();
                 }
             });
@@ -227,14 +224,28 @@ document.addEventListener('DOMContentLoaded', function () {
         })
             .then(response => response.json())
             .then(data => {
-            board = data.board;
-            turn = data.turn;
-            displayBoard();
-            setCheck(data.isCheck);
+                updateData(data);
             });
     }
 
-
+    function updateData(data){
+        board = data.board;
+        turn = data.turn;
+        displayBoard();
+        if (selectedSquare) {
+            const selectedRow = color === -1 ? 7 - parseInt(selectedSquare.dataset.row) : parseInt(selectedSquare.dataset.row);
+            const selectedCol = parseInt(selectedSquare.dataset.col);
+            onCaseClick(selectedRow, selectedCol);
+        }
+        setCheck(data.isCheck);
+        if (data.gameOver){
+            if (data.winner === color){
+                alert("You win !");
+            } else {
+                alert("You loose !");
+            }
+        }
+    }
 
 
 });

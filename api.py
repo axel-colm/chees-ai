@@ -84,13 +84,12 @@ def random_move():
 def alphabeta_move():
     depth = request.json.get('depth', 3)
     chess: Chess = session.get('board')
-    move = AlphaBeta.get_best_move(chess.board, depth, chess.turn)
-    src = move[0]
-    dest = move[1]
+    _, move = AlphaBeta.alphabeta(chess.board, depth, chess.turn)
+    src = move[:2]
+    dest = move[2:]
     src = chess.board.convert_coord_inv(*src)
     dst = chess.board.convert_coord_inv(*dest)
     move = f"{src}-{dst}"
-    print(move)
     ok = chess.move(move)
     result = {'board': chess.board.board, 'turn': chess.turn, 'isCheck': {'white': chess.board.is_check(1), 'black': chess.board.is_check(-1)}}
     if not ok:

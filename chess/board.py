@@ -133,22 +133,21 @@ class Board:
         return False
     
     def is_checkmate(self, color: int) -> bool:
-        if not self.is_chess(color):
+        if not self.is_check(color):
             return False
         for i in range(self.HEIGHT):
             for j in range(self.WIDTH):
                 if self.get_color(j, i) == color:
                     moves = self.get_legal_moves(j, i)
                     for move in moves:
-                        x, y = move
-                        if self.move(j, i, x, y) and not self.is_chess(color):
-                            self.undo_move()
+                        board = self.copy()
+                        board.move(j, i, move[0], move[1])
+                        if not board.is_check(color):
                             return False
-                        self.undo_move()
         return True
     
     def is_game_over(self) -> bool:
-        return False
+        return self.is_checkmate(1) or self.is_checkmate(-1)
     
     #########################################################
     #                       Move functions                  #
@@ -334,6 +333,14 @@ class Board:
                     board.move(x, y, j, i)
                     if not board.is_check(self.get_color(x, y)):
                         moves.append((j, i))
+        return moves
+    
+    def list_moves(self, color: int) -> List[str]:
+        moves = []
+        for i in range(self.HEIGHT):
+            for j in range(self.WIDTH):
+                if self.get_color(j, i) == color:
+                    moves.extend([(j, i, x, y) for x, y in self.get_legal_moves(j, i)])
         return moves
     #########################################################
     #                       Display functions               #
