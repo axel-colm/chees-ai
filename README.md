@@ -1,1 +1,1 @@
-# chees-ai
+# chess-ai
